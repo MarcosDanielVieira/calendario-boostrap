@@ -80,31 +80,13 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" id="submit-button">Salvar</button>
+              <button type="button" class="btn btn-danger" id="delete-button">Excluir</button>
             </div>
           </form>
         </div>
       </div>
     </div>
 
-    <!-- Modal de exclusão -->
-    <div class="modal fade" id="delete-modal" tabindex="-1" role="dialog" aria-labelledby="delete-modal-title"
-      aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="delete-modal-title">Confirmar exclusão</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p>Tem certeza de que deseja excluir o evento?</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-danger" id="delete-button">Excluir</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -122,26 +104,9 @@
     $(document).ready(function () {
       const calendarEl = document.getElementById('calendar');
       const myModal = new bootstrap.Modal(document.getElementById('form'));
-      const deleteModal = new bootstrap.Modal(document.getElementById('delete-modal'));
+      const form = document.getElementById('myForm');
 
-      let myEvents = JSON.parse(localStorage.getItem('events')) || [
-        {
-          id: uuidv4(),
-          title: 'Editar',
-          start: '2024-07-11',
-          backgroundColor: 'red',
-          allDay: false,
-          editable: true,
-        },
-        {
-          id: uuidv4(),
-          title: 'Excluir',
-          start: '2024-07-17',
-          end: '2024-07-21',
-          allDay: false,
-          editable: true,
-        },
-      ];
+      let myEvents = JSON.parse(localStorage.getItem('events')) || [];
 
       const calendar = new FullCalendar.Calendar(calendarEl, {
         customButtons: {
@@ -151,6 +116,7 @@
               $('#modal-title').text('Adicionar evento');
               $('#event-title, #start-date, #end-date, #event-id').val('');
               $('#event-color').val('#3788d8');
+              form.dataset.mode = 'add';
               myModal.show();
             },
           },
@@ -161,16 +127,17 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         initialView: 'dayGridMonth',
-        locale: 'pt-br', // Definindo o idioma para português do Brasil
+        locale: 'pt-br',
         navLinks: true,
         editable: true,
         eventResizableFromStart: true,
         events: myEvents,
         dateClick: function (info) {
-          $('#modal-title').text('Editar evento');
+          $('#modal-title').text('Adicionar evento');
           $('#start-date').val(info.dateStr);
           $('#event-title, #end-date, #event-id').val('');
           $('#event-color').val('#3788d8');
+          form.dataset.mode = 'add';
           myModal.show();
         },
         eventClick: function (info) {
@@ -181,23 +148,14 @@
           $('#event-color').val(event.backgroundColor);
           $('#event-id').val(event.id); // Definir o campo oculto de ID com o ID do evento
           $('#modal-title').text('Editar evento');
+          form.dataset.mode = 'edit';
           myModal.show();
         },
-        eventRightClick: function (info) {
-          const event = info.event;
-          deleteModal.show();
-          $('#delete-button').off('click').on('click', function () {
-            myEvents = myEvents.filter(e => e.id !== event.id);
-            localStorage.setItem('events', JSON.stringify(myEvents));
-            event.remove();
-            deleteModal.hide();
-          });
-        }
       });
 
       calendar.render();
 
-      $('#myForm').submit(function (e) {
+      form.addEventListener('submit', function (e) {
         e.preventDefault();
         const id = $('#event-id').val(); // Obter o ID do campo oculto
         const title = $('#event-title').val();
@@ -210,7 +168,7 @@
           return;
         }
 
-        if (id) {
+        if (form.dataset.mode === 'edit') {
           // Atualizar evento existente
           const updatedEvent = { id, title, start, end, backgroundColor };
           const index = myEvents.findIndex(e => e.id === id);
@@ -225,6 +183,23 @@
           myEvents.push(newEvent);
           localStorage.setItem('events', JSON.stringify(myEvents));
           calendar.addEvent(newEvent);
+        }
+
+        myModal.hide();
+      });
+
+      $('#delete-button').click(function () {
+        const id = $('#event-id').val();
+        if (!id) return;
+
+        const index = myEvents.findIndex(e => e.id === id);
+        if (index > -1) {
+          myEvents.splice(index, 1);
+          localStorage.setItem('events', JSON.stringify(myEvents));
+          const event = calendar.getEventById(id);
+          if (event) {
+            event.remove();
+          }
         }
 
         myModal.hide();
