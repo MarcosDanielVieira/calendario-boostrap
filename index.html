@@ -8,6 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuidv4.min.js"></script>
   <style>
     body {
       padding-top: 20px;
@@ -127,7 +128,7 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         initialView: 'dayGridMonth',
-        locale: 'pt-br',
+        locale: 'pt-br', // Definindo o idioma para português do Brasil
         navLinks: true,
         editable: true,
         eventResizableFromStart: true,
@@ -161,7 +162,7 @@
 
       calendar.render();
 
-      form.addEventListener('submit', function (e) {
+      $('#myForm').submit(function (e) {
         e.preventDefault();
         const id = $('#event-id').val(); // Obter o ID do campo oculto
         const title = $('#event-title').val();
@@ -174,7 +175,7 @@
           return;
         }
 
-        if (form.dataset.mode === 'edit') {
+        if (id) {
           // Atualizar evento existente
           const updatedEvent = { id, title, start, end, backgroundColor };
           const index = myEvents.findIndex(e => e.id === id);
@@ -189,23 +190,6 @@
           myEvents.push(newEvent);
           localStorage.setItem('events', JSON.stringify(myEvents));
           calendar.addEvent(newEvent);
-        }
-
-        myModal.hide();
-      });
-
-      $('#delete-button').click(function () {
-        const id = $('#event-id').val();
-        if (!id) return;
-
-        const index = myEvents.findIndex(e => e.id === id);
-        if (index > -1) {
-          myEvents.splice(index, 1);
-          localStorage.setItem('events', JSON.stringify(myEvents));
-          const event = calendar.getEventById(id);
-          if (event) {
-            event.remove();
-          }
         }
 
         myModal.hide();
