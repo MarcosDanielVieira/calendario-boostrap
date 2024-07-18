@@ -14,10 +14,6 @@
       padding-top: 20px;
       background-color: #a4a3a3;
     }
-
-    .fc-event-title {
-      padding: .25rem !important;
-    }
   </style>
 </head>
 
@@ -99,7 +95,6 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/pt-br.js"></script>
 
   <script>
-
     $(document).ready(function () {
       const calendarEl = document.getElementById('calendar');
       const myModal = new bootstrap.Modal(document.getElementById('form'));
@@ -133,9 +128,18 @@
         editable: true,
         eventResizableFromStart: true,
         events: myEvents,
+        eventContent: function (arg) {
+          let startTime = moment(arg.event.start).format('HH:mm');
+          let endTime = arg.event.end ? moment(arg.event.end).format('HH:mm') : '';
+          return {
+            html: `<div class="p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="${arg.event.title} ${startTime} - ${endTime}">
+                ${arg.event.title} ${startTime} - ${endTime}
+            </div>`
+          };
+        },
         dateClick: function (info) {
           $('#modal-title').text('Adicionar evento');
-          $('#start-date').val(moment(info.date).format('YYYY-MM-DDTHH:mm')); // Ajuste para iniciar no horário local
+          $('#start-date').val(moment(info.date).format('YYYY-MM-DDTHH:mm'));
           $('#event-title, #end-date, #event-id').val('');
           $('#event-color').val('#3788d8');
           form.dataset.mode = 'add';
@@ -144,10 +148,10 @@
         eventClick: function (info) {
           const event = info.event;
           $('#event-title').val(event.title);
-          $('#start-date').val(moment(event.start).format('YYYY-MM-DDTHH:mm')); // Formato local
-          $('#end-date').val(event.end ? moment(event.end).format('YYYY-MM-DDTHH:mm') : ''); // Formato local
+          $('#start-date').val(moment(event.start).format('YYYY-MM-DDTHH:mm'));
+          $('#end-date').val(event.end ? moment(event.end).format('YYYY-MM-DDTHH:mm') : '');
           $('#event-color').val(event.backgroundColor);
-          $('#event-id').val(event.id); // Definir o campo oculto de ID com o ID do evento
+          $('#event-id').val(event.id);
           $('#modal-title').text('Editar evento');
           form.dataset.mode = 'edit';
           myModal.show();
@@ -157,17 +161,22 @@
 
       calendar.render();
 
+      // Inicializar tooltips após a renderização do calendário
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+
       $('#myForm').submit(function (e) {
         e.preventDefault();
-        const id = $('#event-id').val(); // Obter o ID do campo oculto
+        const id = $('#event-id').val();
         const title = $('#event-title').val();
         let start = $('#start-date').val();
         let end = $('#end-date').val();
         const backgroundColor = $('#event-color').val();
 
-        // Corrigir o formato das datas para o formato ISO em UTC
         start = moment(start).utc().toISOString();
-        end = end ? moment(end).utc().toISOString() : moment(start).endOf('day').utc().toISOString(); // Se a data de término não estiver definida, considerar como o último momento do dia
+        end = end ? moment(end).utc().toISOString() : moment(start).endOf('day').utc().toISOString();
 
         if (new Date(end) < new Date(start)) {
           alert('A data de término não pode ser anterior à data de início.');
@@ -175,7 +184,6 @@
         }
 
         if (id) {
-          // Atualizar evento existente
           const updatedEvent = { id, title, start, end, backgroundColor };
           const index = myEvents.findIndex(e => e.id === id);
           myEvents[index] = updatedEvent;
@@ -184,7 +192,6 @@
           event.remove();
           calendar.addEvent(updatedEvent);
         } else {
-          // Adicionar novo evento
           const newEvent = { id: uuidv4(), title, start, end, backgroundColor };
           myEvents.push(newEvent);
           localStorage.setItem('events', JSON.stringify(myEvents));
@@ -194,24 +201,23 @@
         myModal.hide();
       });
 
-      // Adicionar evento de clique para o botão "Excluir"
       $('#delete-button').click(function () {
         const id = $('#event-id').val();
         if (id) {
           const index = myEvents.findIndex(e => e.id === id);
           if (index !== -1) {
-            myEvents.splice(index, 1); // Remove o evento do array
-            localStorage.setItem('events', JSON.stringify(myEvents)); // Atualiza localStorage
+            myEvents.splice(index, 1);
+            localStorage.setItem('events', JSON.stringify(myEvents));
             const event = calendar.getEventById(id);
             if (event) {
-              event.remove(); // Remove o evento do calendário
+              event.remove();
             }
           }
-          myModal.hide(); // Fecha o modal após excluir
+          myModal.hide();
         }
       });
-    });
 
+    });
   </script>
 </body>
 
