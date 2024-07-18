@@ -194,7 +194,26 @@
 
         myModal.hide();
       });
+
+      // Adicionar evento de clique para o botão "Excluir"
+      $('#delete-button').click(function () {
+        const id = $('#event-id').val();
+        if (id) {
+          const index = myEvents.findIndex(e => e.id === id);
+          if (index !== -1) {
+            myEvents.splice(index, 1); // Remove o evento do array
+            localStorage.setItem('events', JSON.stringify(myEvents)); // Atualiza localStorage
+            const event = calendar.getEventById(id);
+            if (event) {
+              event.remove(); // Remove o evento do calendário
+            }
+          }
+          myModal.hide(); // Fecha o modal após excluir
+        }
+      });
+
     });
+
   </script>
 </body>
 
