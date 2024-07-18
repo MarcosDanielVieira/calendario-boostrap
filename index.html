@@ -23,6 +23,10 @@
     .modal-dialog {
       max-width: 800px;
     }
+
+    .fc-event-title {
+      padding: .25rem !important;
+    }
   </style>
 </head>
 
@@ -152,12 +156,7 @@
           form.dataset.mode = 'edit';
           myModal.show();
         },
-        buttonText: {
-          today: 'Hoje',
-          month: 'Mês',
-          week: 'Semana',
-          day: 'Dia'
-        }
+        buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia' }
       });
 
       calendar.render();
@@ -169,6 +168,11 @@
         const start = $('#start-date').val();
         const end = $('#end-date').val();
         const backgroundColor = $('#event-color').val();
+
+        // Se a data de término não estiver definida, considerar como o último momento do dia
+        if (!end) {
+          end = moment(start).endOf('day').toISOString(); // Moment.js é usado para manipulação de data
+        }
 
         if (new Date(end) < new Date(start)) {
           alert('A data de término não pode ser anterior à data de início.');
