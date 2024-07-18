@@ -12,16 +12,7 @@
   <style>
     body {
       padding-top: 20px;
-      background-color: #f0f0f0;
-    }
-
-    .card-calendar {
-      max-width: 800px;
-      margin: auto;
-    }
-
-    .modal-dialog {
-      max-width: 800px;
+      background-color: #a4a3a3;
     }
 
     .fc-event-title {
@@ -40,7 +31,7 @@
 
     <!-- Modal de adicionar/editar evento -->
     <div class="modal fade" id="form" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="modal-title">Adicionar evento</h5>
@@ -62,13 +53,13 @@
               <div class="row">
                 <div class="col-md-4 mb-2">
                   <label for="start-date" class="form-label">Data de início <span class="text-danger">*</span></label>
-                  <input type="date" class="form-control" id="start-date" required>
+                  <input type="datetime-local" class="form-control" id="start-date" required>
                 </div>
 
                 <div class="col-md-4 mb-2">
                   <label for="end-date" class="form-label">Data de término - <small
                       class="text-muted">Opcional</small></label>
-                  <input type="date" class="form-control" id="end-date">
+                  <input type="datetime-local" class="form-control" id="end-date">
                 </div>
 
                 <div class="col-md-4 mb-2">
@@ -76,7 +67,6 @@
                   <input type="color" class="form-control" id="event-color" value="#3788d8">
                 </div>
               </div>
-
 
               <!-- Campo oculto para armazenar o ID do evento -->
               <input type="hidden" id="event-id">
@@ -103,9 +93,10 @@
     crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.pt-br.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/pt-br.js"></script>
 
   <script>
+
     $(document).ready(function () {
       const calendarEl = document.getElementById('calendar');
       const myModal = new bootstrap.Modal(document.getElementById('form'));
@@ -132,14 +123,16 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         initialView: 'dayGridMonth',
-        locale: 'pt-br', // Definindo o idioma para português do Brasil
+        locale: 'pt-br',
+        dayHeaderFormat: { weekday: 'long' },
+        allDayText: 'Dia todo',
         navLinks: true,
         editable: true,
         eventResizableFromStart: true,
         events: myEvents,
         dateClick: function (info) {
           $('#modal-title').text('Adicionar evento');
-          $('#start-date').val(info.dateStr);
+          $('#start-date').val(moment(info.date).format('YYYY-MM-DDTHH:mm')); // Ajuste para iniciar no horário local
           $('#event-title, #end-date, #event-id').val('');
           $('#event-color').val('#3788d8');
           form.dataset.mode = 'add';
@@ -148,8 +141,8 @@
         eventClick: function (info) {
           const event = info.event;
           $('#event-title').val(event.title);
-          $('#start-date').val(event.start.toISOString().slice(0, 10));
-          $('#end-date').val(event.end ? event.end.toISOString().slice(0, 10) : '');
+          $('#start-date').val(moment(event.start).format('YYYY-MM-DDTHH:mm')); // Formato local
+          $('#end-date').val(event.end ? moment(event.end).format('YYYY-MM-DDTHH:mm') : ''); // Formato local
           $('#event-color').val(event.backgroundColor);
           $('#event-id').val(event.id); // Definir o campo oculto de ID com o ID do evento
           $('#modal-title').text('Editar evento');
@@ -165,14 +158,13 @@
         e.preventDefault();
         const id = $('#event-id').val(); // Obter o ID do campo oculto
         const title = $('#event-title').val();
-        const start = $('#start-date').val();
-        const end = $('#end-date').val();
+        let start = $('#start-date').val();
+        let end = $('#end-date').val();
         const backgroundColor = $('#event-color').val();
 
-        // Se a data de término não estiver definida, considerar como o último momento do dia
-        if (!end) {
-          end = moment(start).endOf('day').toISOString(); // Moment.js é usado para manipulação de data
-        }
+        // Corrigir o formato das datas para o formato ISO em UTC
+        start = moment(start).utc().toISOString();
+        end = end ? moment(end).utc().toISOString() : moment(start).endOf('day').utc().toISOString(); // Se a data de término não estiver definida, considerar como o último momento do dia
 
         if (new Date(end) < new Date(start)) {
           alert('A data de término não pode ser anterior à data de início.');
@@ -215,7 +207,6 @@
           myModal.hide(); // Fecha o modal após excluir
         }
       });
-
     });
 
   </script>
