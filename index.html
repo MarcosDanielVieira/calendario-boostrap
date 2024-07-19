@@ -102,6 +102,14 @@
 
       let myEvents = JSON.parse(localStorage.getItem('events')) || [];
 
+      function getContrastYIQ(hexcolor) {
+        hexcolor = hexcolor.replace('#', '');
+        const r = parseInt(hexcolor.substr(0, 2), 16);
+        const g = parseInt(hexcolor.substr(2, 2), 16);
+        const b = parseInt(hexcolor.substr(4, 2), 16);
+        return (((r * 299) + (g * 587) + (b * 114)) / 1000 >= 128) ? 'black' : 'white';
+      }
+
       const calendar = new FullCalendar.Calendar(calendarEl, {
         customButtons: {
           customButton: {
@@ -123,7 +131,7 @@
         initialView: 'dayGridMonth',
         locale: 'pt-br',
         dayHeaderFormat: { weekday: 'long' },
-        allDayText: 'Dia todo',
+        allDayText: 'Hora',
         navLinks: true,
         editable: true,
         eventResizableFromStart: true,
@@ -131,10 +139,13 @@
         eventContent: function (arg) {
           let startTime = moment(arg.event.start).format('HH:mm');
           let endTime = arg.event.end ? moment(arg.event.end).format('HH:mm') : '';
+          // Determina a cor do texto com base na cor de fundo
+          const textColor = getContrastYIQ(arg.event.backgroundColor);
+
           return {
-            html: `<div class="p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="${arg.event.title} ${startTime} - ${endTime}">
-                ${arg.event.title} ${startTime} - ${endTime}
-            </div>`
+            html: `<div class="p-1" style="background-color: ${arg.event.backgroundColor}; color: ${textColor};" data-bs-toggle="tooltip" data-bs-placement="bottom" title="${arg.event.title} ${startTime} - ${endTime}">
+            ${arg.event.title} ${startTime} - ${endTime}
+          </div>`
           };
         },
         dateClick: function (info) {
@@ -176,7 +187,8 @@
         const backgroundColor = $('#event-color').val();
 
         start = moment(start).utc().toISOString();
-        end = end ? moment(end).utc().toISOString() : moment(start).endOf('day').utc().toISOString();
+        end = end ? moment(end).utc().toISOString() :
+          moment(start).endOf('day').utc().toISOString();
 
         if (new Date(end) < new Date(start)) {
           alert('A data de término não pode ser anterior à data de início.');
